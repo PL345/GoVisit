@@ -374,3 +374,10 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Secrets and Temporary Files
+*.secrets.json
+.env
+response.json
+test-event.json
+DEPLOYMENT.md
