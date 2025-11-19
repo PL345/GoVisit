@@ -63,4 +63,23 @@ public class AppointmentsController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPost("available")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<AvailableAppointmentSlot>>>> GetAvailableAppointments(
+        [FromBody] AvailableAppointmentsRequest request)
+    {
+        try
+        {
+            var availableSlots = await _appointmentService.GetAvailableAppointmentsAsync(request);
+            return Ok(ApiResponse<IEnumerable<AvailableAppointmentSlot>>.SuccessResult(
+                availableSlots, 
+                "Available appointments retrieved successfully"));
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ApiResponse<IEnumerable<AvailableAppointmentSlot>>.ErrorResult(
+                ex.Message, 
+                "VALIDATION_ERROR"));
+        }
+    }
 }

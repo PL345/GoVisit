@@ -92,6 +92,143 @@ public class AppointmentService : IAppointmentService
         await _appointmentRepository.DeleteAsync(id);
     }
 
+    public async Task<IEnumerable<AvailableAppointmentSlot>> GetAvailableAppointmentsAsync(AvailableAppointmentsRequest request)
+    {
+        if (request.EndDate < request.StartDate)
+            throw new ArgumentException("End date must be after start date");
+
+        if (request.StartDate.Date < DateTime.Today)
+            throw new ArgumentException("Start date cannot be in the past");
+
+        var availableSlots = new List<AvailableAppointmentSlot>();
+
+        // Get all offices that offer the requested service
+        var allOffices = await _officeRepository.GetAllAsync();
+        var eligibleOffices = allOffices
+            .Where(o => o.IsActive && o.Services.Contains(request.ServiceType))
+            .Where(o => string.IsNullOrEmpty(request.OfficeId) || o.OfficeId == request.OfficeId)
+            .GroupBy(o => o.OfficeId)
+            .Select(g => g.First())
+            .ToList();
+
+        if (!eligibleOffices.Any())
+            throw new ArgumentException($"No active offices found offering service '{request.ServiceType}'");
+
+        // Get all schedules for the service (handle duplicates by taking first per office)
+        var allSchedules = await _scheduleRepository.GetAllAsync();
+        var schedulesByOffice = allSchedules
+            .Where(s => s.ServiceType == request.ServiceType)
+            .GroupBy(s => s.OfficeId)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        if (!schedulesByOffice.Any())
+            throw new ArgumentException($"No schedules found for service '{request.ServiceType}'. Please contact administrator.");
+
+        // Get all existing appointments in the date range
+        var allAppointments = await _appointmentRepository.GetAllAsync();
+        var bookedSlots = allAppointments
+            .Where(a => a.ServiceType == request.ServiceType &&
+                       a.AppointmentDate.Date >= request.StartDate.Date &&
+                       a.AppointmentDate.Date <= request.EndDate.Date &&
+                       a.Status != AppointmentStatus.Cancelled)
+            .GroupBy(a => a.OfficeId)
+            .ToDictionary(
+                g => g.Key,
+                g => new HashSet<(DateTime Date, TimeSpan Time)>(
+                    g.Select(a => (a.AppointmentDate.Date, a.AppointmentTime))
+                )
+            );
+
+        // Generate available slots for each office
+        foreach (var office in eligibleOffices)
+        {
+            if (!schedulesByOffice.TryGetValue(office.OfficeId, out var schedule))
+                continue;
+
+            var officeBookedSlots = bookedSlots.GetValueOrDefault(office.OfficeId, new HashSet<(DateTime, TimeSpan)>());
+
+            for (var date = request.StartDate.Date; date <= request.EndDate.Date; date = date.AddDays(1))
+            {
+                var daySlots = GenerateDaySlotsForOffice(office, schedule, date, officeBookedSlots);
+                availableSlots.AddRange(daySlots);
+            }
+        }
+
+        return availableSlots.OrderBy(s => s.Date).ThenBy(s => s.Time).ThenBy(s => s.OfficeName);
+    }
+
+    private static List<AvailableAppointmentSlot> GenerateDaySlotsForOffice(
+        Office office,
+        OfficeSchedule schedule,
+        DateTime date,
+        HashSet<(DateTime Date, TimeSpan Time)> bookedSlots)
+    {
+        var slots = new List<AvailableAppointmentSlot>();
+
+        // Check for date overrides first
+        var dateOverride = schedule.DateOverrides.FirstOrDefault(d => d.Date.Date == date.Date);
+        if (dateOverride != null)
+        {
+            if (dateOverride.IsClosed)
+                return slots;
+
+            if (dateOverride.CustomSchedule != null)
+            {
+                return GenerateTimeSlotsForDay(office, schedule.ServiceType, date, dateOverride.CustomSchedule, bookedSlots);
+            }
+        }
+
+        // Use weekly schedule
+        var dayOfWeek = date.DayOfWeek.ToString();
+        if (schedule.WeeklySchedule.TryGetValue(dayOfWeek, out var daySchedule) && daySchedule.IsOpen)
+        {
+            return GenerateTimeSlotsForDay(office, schedule.ServiceType, date, daySchedule, bookedSlots);
+        }
+
+        return slots;
+    }
+
+    private static List<AvailableAppointmentSlot> GenerateTimeSlotsForDay(
+        Office office,
+        string serviceType,
+        DateTime date,
+        DaySchedule daySchedule,
+        HashSet<(DateTime Date, TimeSpan Time)> bookedSlots)
+    {
+        var slots = new List<AvailableAppointmentSlot>();
+        var currentTime = daySchedule.StartTime;
+        var slotDuration = TimeSpan.FromMinutes(daySchedule.SlotDurationMinutes);
+
+        while (currentTime.Add(slotDuration) <= daySchedule.EndTime)
+        {
+            // Skip break time
+            if (daySchedule.BreakStart.HasValue && daySchedule.BreakEnd.HasValue &&
+                currentTime >= daySchedule.BreakStart && currentTime < daySchedule.BreakEnd)
+            {
+                currentTime = daySchedule.BreakEnd.Value;
+                continue;
+            }
+
+            // Check if slot is not booked
+            if (!bookedSlots.Contains((date, currentTime)))
+            {
+                slots.Add(new AvailableAppointmentSlot
+                {
+                    OfficeId = office.OfficeId,
+                    OfficeName = office.Name,
+                    ServiceType = serviceType,
+                    Date = date,
+                    Time = currentTime,
+                    DurationMinutes = daySchedule.SlotDurationMinutes
+                });
+            }
+
+            currentTime = currentTime.Add(slotDuration);
+        }
+
+        return slots;
+    }
+
     private async Task<Office> ValidateOfficeAsync(string officeId)
     {
         var offices = await _officeRepository.GetAllAsync();

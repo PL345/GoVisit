@@ -13,4 +13,5 @@ public interface IAppointmentService
     Task<IEnumerable<Appointment>> GetAppointmentsByCitizenAsync(string citizenId);
     Task UpdateAppointmentAsync(Appointment appointment);
     Task DeleteAppointmentAsync(string id);
+    Task<IEnumerable<AvailableAppointmentSlot>> GetAvailableAppointmentsAsync(AvailableAppointmentsRequest request);
 }
