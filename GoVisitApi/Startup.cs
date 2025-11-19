@@ -4,6 +4,7 @@ using GoVisit.Core.Models;
 using GoVisit.Core.Interfaces;
 using GoVisit.Application.Services;
 using GoVisit.Infrastructure.Repositories;
+using GoVisitApi.Middleware;
 
 namespace GoVisitApi;
 
@@ -71,6 +72,8 @@ public class Startup
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
+        app.UseMiddleware<ExceptionHandlingMiddleware>();
+        
         app.UseSwagger();
         app.UseSwaggerUI(c =>
         {
