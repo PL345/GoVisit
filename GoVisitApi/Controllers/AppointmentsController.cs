@@ -16,20 +16,20 @@ public class AppointmentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Appointment>>> GetAppointments()
+    public async Task<ActionResult<ApiResponse<IEnumerable<Appointment>>>> GetAppointments()
     {
         var appointments = await _appointmentService.GetAllAppointmentsAsync();
-        return Ok(appointments);
+        return Ok(ApiResponse<IEnumerable<Appointment>>.SuccessResult(appointments, "התורים נטענו בהצלחה"));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Appointment>> GetAppointment(string id)
+    public async Task<ActionResult<ApiResponse<Appointment>>> GetAppointment(string id)
     {
         var appointment = await _appointmentService.GetAppointmentByIdAsync(id);
         if (appointment == null)
-            return NotFound();
+            return NotFound(ApiResponse<Appointment>.ErrorResult("התור לא נמצא", "NOT_FOUND"));
         
-        return Ok(appointment);
+        return Ok(ApiResponse<Appointment>.SuccessResult(appointment, "התור נמצא בהצלחה"));
     }
 
     [HttpGet("office/{officeId}")]
@@ -47,10 +47,11 @@ public class AppointmentsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Appointment>> CreateAppointment(CreateAppointmentRequest request)
+    public async Task<ActionResult<ApiResponse<Appointment>>> CreateAppointment(CreateAppointmentRequest request)
     {
         var appointment = await _appointmentService.CreateAppointmentAsync(request);
-        return CreatedAtAction(nameof(GetAppointment), new { id = appointment.Id }, appointment);
+        return CreatedAtAction(nameof(GetAppointment), new { id = appointment.Id }, 
+            ApiResponse<Appointment>.SuccessResult(appointment, "התור נקבע בהצלחה"));
     }
 
     [HttpPut("{id}/status")]

@@ -10,4 +10,7 @@ public interface IAppointmentService
     Task<bool> UpdateAppointmentStatusAsync(string id, AppointmentStatus status);
     Task<IEnumerable<Appointment>> GetAppointmentsByOfficeAsync(string officeId);
     Task<IEnumerable<Appointment>> GetAppointmentsByDateAsync(DateTime date);
+    Task<IEnumerable<Appointment>> GetAppointmentsByCitizenAsync(string citizenId);
+    Task UpdateAppointmentAsync(Appointment appointment);
+    Task DeleteAppointmentAsync(string id);
 }
