@@ -28,7 +28,7 @@ public class Startup
             { 
                 Title = "GoVisit - Government Appointment Scheduler API", 
                 Version = "v1",
-                Description = "מערכת זימון תורים עבור משרדי הממשלה",
+                Description = "שירותי זימון תורים עבור משרדי הממשלה",
                 Contact = new OpenApiContact
                 {
                     Name = "Government IT Department"
@@ -74,14 +74,32 @@ public class Startup
     {
         app.UseMiddleware<ExceptionHandlingMiddleware>();
         
-        app.UseSwagger();
+        app.UseSwagger(c =>
+        {
+            c.PreSerializeFilters.Add((swaggerDoc, httpReq) =>
+            {
+                var serverUrl = $"{httpReq.Scheme}://{httpReq.Host.Value}";
+                if (httpReq.Headers.ContainsKey("X-Forwarded-Proto"))
+                {
+                    var stage = httpReq.PathBase.Value?.TrimStart('/') ?? "Prod";
+                    serverUrl = $"https://{httpReq.Host.Value}/{stage}";
+                }
+                swaggerDoc.Servers = new List<Microsoft.OpenApi.Models.OpenApiServer>
+                {
+                    new Microsoft.OpenApi.Models.OpenApiServer { Url = serverUrl }
+                };
+            });
+        });
+        
         app.UseSwaggerUI(c =>
         {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "GoVisit API v1");
+            c.SwaggerEndpoint("./v1/swagger.json", "GoVisit API v1");
             c.RoutePrefix = "swagger";
-            c.DocumentTitle = "GoVisit - Government Appointment Scheduler";
+            c.DocumentTitle = "🏛️ GoVisit - Government Appointment Scheduler";
+            c.HeadContent = @"<link rel='icon' type='image/svg+xml' href='data:image/svg+xml,<svg xmlns=""http://www.w3.org/2000/svg"" viewBox=""0 0 100 100""><text y="".9em"" font-size=""90"">🏛️</text></svg>'>";
         });
 
+        app.UseStaticFiles();
         app.UseRouting();
         app.UseCors();
         app.UseAuthorization();

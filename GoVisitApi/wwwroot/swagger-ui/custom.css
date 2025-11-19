@@ -1,0 +1,4 @@
+/* Custom favicon */
+link[rel="icon"] {
+    display: none;
+}
