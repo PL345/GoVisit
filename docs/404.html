@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Redirecting...</title>
+    <script>
+        // Get the full URL and just replace %23 with #
+        const currentUrl = window.location.href;
+        
+        // Replace the GitHub Pages domain with GitHub domain
+        let fixedUrl = currentUrl.replace('pl345.github.io/GoVisit/', 'github.com/PL345/GoVisit/');
+        
+        // Replace %23 with #
+        fixedUrl = fixedUrl.replace(/%23/g, '#');
+        
+        // Redirect
+        window.location.replace(fixedUrl);
+    </script>
+</head>
+<body>
+    <p>Redirecting to GitHub...</p>
+</body>
+</html>
