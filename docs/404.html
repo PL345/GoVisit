@@ -2,22 +2,77 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Redirecting...</title>
-    <script>
-        // Get the full URL and just replace %23 with #
-        const currentUrl = window.location.href;
-        
-        // Replace the GitHub Pages domain with GitHub domain
-        let fixedUrl = currentUrl.replace('pl345.github.io/GoVisit/', 'github.com/PL345/GoVisit/');
-        
-        // Replace %23 with #
-        fixedUrl = fixedUrl.replace(/%23/g, '#');
-        
-        // Redirect
-        window.location.replace(fixedUrl);
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoVisit - Page Not Found</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: #f6f8fa;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            padding: 30px;
+        }
+        h1 { color: #24292f; margin-top: 0; }
+        .warning { 
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #0dcaf0;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        code {
+            background: #f6f8fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .button {
+            display: inline-block;
+            background: #2da44e;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .button:hover { background: #2c974b; }
+    </style>
 </head>
 <body>
-    <p>Redirecting to GitHub...</p>
+    <div class="container">
+        <h1>🔍 Page Not Found</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Link Issue Detected</strong>
+            <p>If you came here from a coverage report, the link may have <code>%23</code> instead of <code>#</code> in the URL.</p>
+        </div>
+
+        <div class="info">
+            <strong>💡 How to Fix:</strong>
+            <ol>
+                <li>Look at the URL in your browser's address bar</li>
+                <li>Find <code>%23</code> in the URL</li>
+                <li>Replace it with <code>#</code></li>
+                <li>Press Enter</li>
+            </ol>
+            <p><strong>Example:</strong><br>
+            ❌ <code>...README.md%23example-usage</code><br>
+            ✅ <code>...README.md#example-usage</code></p>
+        </div>
+
+        <p>Or go back to the main documentation:</p>
+        <a href="https://github.com/PL345/GoVisit" class="button">📚 View Documentation</a>
+    </div>
 </body>
 </html>
