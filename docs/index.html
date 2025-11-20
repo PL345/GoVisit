@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GoVisit Documentation</title>
+    <script>
+        // Get everything after the domain
+        let path = window.location.pathname + window.location.search + window.location.hash;
+        
+        // Remove /docs/ from the path since we're serving from docs folder
+        path = path.replace('/docs/', '/');
+        
+        // Replace %23 with #
+        const fixedPath = path.replace(/%23/g, '#');
+        
+        // Build GitHub URL
+        const githubUrl = 'https://github.com/PL345/GoVisit/blob/main' + fixedPath;
+        
+        // Redirect
+        window.location.href = githubUrl;
+    </script>
+</head>
+<body>
+    <p>Redirecting to GitHub documentation...</p>
+</body>
+</html>
